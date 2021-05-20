@@ -150,6 +150,7 @@ static int copy(grpc_slice_buffer* input, grpc_slice_buffer* output) {
 
 static int compress_inner(grpc_message_compression_algorithm algorithm,
                           grpc_slice_buffer* input, grpc_slice_buffer* output) {
+  ZWRAP_useZSTDcompression(0);
   switch (algorithm) {
     case GRPC_MESSAGE_COMPRESS_NONE:
       /* the fallback path always needs to be send uncompressed: we simply
@@ -159,6 +160,9 @@ static int compress_inner(grpc_message_compression_algorithm algorithm,
       return zlib_compress(input, output, 0);
     case GRPC_MESSAGE_COMPRESS_GZIP:
       return zlib_compress(input, output, 1);
+    case GRPC_MESSAGE_COMPRESS_ZSTD:
+      ZWRAP_useZSTDcompression(1);
+      return zlib_compress(input, output, 2);
     case GRPC_MESSAGE_COMPRESS_ALGORITHMS_COUNT:
       break;
   }
@@ -177,6 +181,7 @@ int grpc_msg_compress(grpc_message_compression_algorithm algorithm,
 
 int grpc_msg_decompress(grpc_message_compression_algorithm algorithm,
                         grpc_slice_buffer* input, grpc_slice_buffer* output) {
+  ZWRAP_useZSTDcompression(0);
   switch (algorithm) {
     case GRPC_MESSAGE_COMPRESS_NONE:
       return copy(input, output);
@@ -184,6 +189,9 @@ int grpc_msg_decompress(grpc_message_compression_algorithm algorithm,
       return zlib_decompress(input, output, 0);
     case GRPC_MESSAGE_COMPRESS_GZIP:
       return zlib_decompress(input, output, 1);
+    case GRPC_MESSAGE_COMPRESS_ZSTD:
+      ZWRAP_useZSTDcompression(1);
+      return zlib_decompress(input, output, 2);
     case GRPC_MESSAGE_COMPRESS_ALGORITHMS_COUNT:
       break;
   }

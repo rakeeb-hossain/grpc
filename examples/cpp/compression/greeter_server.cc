@@ -41,7 +41,7 @@ class GreeterServiceImpl final : public Greeter::Service {
   Status SayHello(ServerContext* context, const HelloRequest* request,
                   HelloReply* reply) override {
     // Overwrite the call's compression algorithm to DEFLATE.
-    context->set_compression_algorithm(GRPC_COMPRESS_DEFLATE);
+    context->set_compression_algorithm(GRPC_COMPRESS_ZSTD);
     std::string prefix("Hello ");
     reply->set_message(prefix + request->name());
     return Status::OK;
@@ -54,7 +54,7 @@ void RunServer() {
 
   ServerBuilder builder;
   // Set the default compression algorithm for the server.
-  builder.SetDefaultCompressionAlgorithm(GRPC_COMPRESS_GZIP);
+  builder.SetDefaultCompressionAlgorithm(GRPC_COMPRESS_ZSTD);
   // Listen on the given address without any authentication mechanism.
   builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
   // Register "service" as the instance through which we'll communicate with
