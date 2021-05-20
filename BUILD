@@ -1062,6 +1062,7 @@ grpc_cc_library(
     ],
     external_deps = [
         "madler_zlib",
+        "fb_zstd",
         "absl/container:inlined_vector",
         "absl/status",
         "absl/status:statusor",
