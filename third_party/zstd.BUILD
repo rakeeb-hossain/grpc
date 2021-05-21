@@ -10,6 +10,7 @@ cc_library(
             "zlibWrapper/gz*.h",
         ],
     ) + ["zlibWrapper/zstd_zlibwrapper.h"],
+    defines = ["ZWRAP_USE_ZSTD=1"],
     linkstatic = 1,
 )
 
