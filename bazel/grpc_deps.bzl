@@ -37,6 +37,11 @@ def grpc_deps():
     )
 
     native.bind(
+        name = "fb_zstd",
+        actual = "@zstd//:zstd",
+    )
+
+    native.bind(
         name = "protobuf",
         actual = "@com_google_protobuf//:protobuf",
     )
@@ -117,6 +122,17 @@ def grpc_deps():
             strip_prefix = "zlib-cacf7f1d4e3d44d871b605da3b647f07d718623f",
             url = "https://github.com/madler/zlib/archive/cacf7f1d4e3d44d871b605da3b647f07d718623f.tar.gz",
         )
+
+    if "zstd" not in native.existing_rules():
+        http_archive(
+             name = "zstd",
+             build_file = "@com_github_grpc_grpc//third_party:zstd.BUILD",
+             sha256 = "6726f0cad6f4fe6ba7a1c5942b253f45bd3f6671e7d706b4c9cf9d45b654d869",
+             strip_prefix = "zstd-a488ba114ec17ea1054b9057c26a046fc122b3b6",
+             urls = [
+                 "https://github.com/facebook/zstd/archive/a488ba114ec17ea1054b9057c26a046fc122b3b6.tar.gz",
+         ],
+     )
 
     if "com_google_protobuf" not in native.existing_rules():
         http_archive(

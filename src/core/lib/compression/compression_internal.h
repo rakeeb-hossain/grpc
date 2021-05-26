@@ -34,6 +34,7 @@ typedef enum {
   GRPC_MESSAGE_COMPRESS_DEFLATE,
   GRPC_MESSAGE_COMPRESS_GZIP,
   /* TODO(ctiller): snappy */
+  GRPC_MESSAGE_COMPRESS_ZSTD,
   GRPC_MESSAGE_COMPRESS_ALGORITHMS_COUNT
 } grpc_message_compression_algorithm;
 

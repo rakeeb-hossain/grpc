@@ -40,6 +40,8 @@ grpc_message_compression_algorithm_from_slice(const grpc_slice& str) {
     return GRPC_MESSAGE_COMPRESS_DEFLATE;
   if (grpc_slice_eq_static_interned(str, GRPC_MDSTR_GZIP))
     return GRPC_MESSAGE_COMPRESS_GZIP;
+  if (grpc_slice_eq_static_interned(str, GRPC_MDSTR_ZSTD))
+    return GRPC_MESSAGE_COMPRESS_ZSTD;
   return GRPC_MESSAGE_COMPRESS_ALGORITHMS_COUNT;
 }
 
@@ -61,6 +63,8 @@ grpc_mdelem grpc_message_compression_encoding_mdelem(
       return GRPC_MDELEM_GRPC_ENCODING_DEFLATE;
     case GRPC_MESSAGE_COMPRESS_GZIP:
       return GRPC_MDELEM_GRPC_ENCODING_GZIP;
+    case GRPC_MESSAGE_COMPRESS_ZSTD:
+      return GRPC_MDELEM_GRPC_ENCODING_ZSTD;
     default:
       break;
   }
@@ -90,6 +94,8 @@ grpc_compression_algorithm_to_message_compression_algorithm(
       return GRPC_MESSAGE_COMPRESS_DEFLATE;
     case GRPC_COMPRESS_GZIP:
       return GRPC_MESSAGE_COMPRESS_GZIP;
+    case GRPC_COMPRESS_ZSTD:
+      return GRPC_MESSAGE_COMPRESS_ZSTD;
     default:
       return GRPC_MESSAGE_COMPRESS_NONE;
   }
@@ -158,6 +164,9 @@ int grpc_compression_algorithm_from_message_stream_compression_algorithm(
       case GRPC_MESSAGE_COMPRESS_GZIP:
         *algorithm = GRPC_COMPRESS_GZIP;
         return 1;
+      case GRPC_MESSAGE_COMPRESS_ZSTD:
+        *algorithm = GRPC_COMPRESS_ZSTD;
+        return 1;
       default:
         *algorithm = GRPC_COMPRESS_NONE;
         return 0;
@@ -182,6 +191,9 @@ int grpc_message_compression_algorithm_name(
       return 1;
     case GRPC_MESSAGE_COMPRESS_GZIP:
       *name = "gzip";
+      return 1;
+    case GRPC_MESSAGE_COMPRESS_ZSTD:
+      *name = "zstd";
       return 1;
     case GRPC_MESSAGE_COMPRESS_ALGORITHMS_COUNT:
       return 0;
@@ -256,6 +268,9 @@ int grpc_message_compression_algorithm_parse(
     return 1;
   } else if (grpc_slice_eq_static_interned(value, GRPC_MDSTR_GZIP)) {
     *algorithm = GRPC_MESSAGE_COMPRESS_GZIP;
+    return 1;
+  } else if (grpc_slice_eq_static_interned(value, GRPC_MDSTR_ZSTD)) {
+    *algorithm = GRPC_MESSAGE_COMPRESS_ZSTD;
     return 1;
   } else {
     return 0;

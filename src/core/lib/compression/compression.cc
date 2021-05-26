@@ -32,7 +32,7 @@
 
 int grpc_compression_algorithm_is_message(
     grpc_compression_algorithm algorithm) {
-  return (algorithm >= GRPC_COMPRESS_DEFLATE && algorithm <= GRPC_COMPRESS_GZIP)
+  return (algorithm >= GRPC_COMPRESS_DEFLATE && algorithm <= GRPC_COMPRESS_ZSTD)
              ? 1
              : 0;
 }
@@ -51,6 +51,9 @@ int grpc_compression_algorithm_parse(grpc_slice name,
     return 1;
   } else if (grpc_slice_eq_static_interned(name, GRPC_MDSTR_GZIP)) {
     *algorithm = GRPC_COMPRESS_GZIP;
+    return 1;
+  } else if (grpc_slice_eq_static_interned(name, GRPC_MDSTR_ZSTD)) {
+    *algorithm = GRPC_COMPRESS_ZSTD;
     return 1;
   } else if (grpc_slice_eq_static_interned(name,
                                            GRPC_MDSTR_STREAM_SLASH_GZIP)) {
@@ -74,6 +77,9 @@ int grpc_compression_algorithm_name(grpc_compression_algorithm algorithm,
       return 1;
     case GRPC_COMPRESS_GZIP:
       *name = "gzip";
+      return 1;
+    case GRPC_COMPRESS_ZSTD:
+      *name = "zstd";
       return 1;
     case GRPC_COMPRESS_STREAM_GZIP:
       *name = "stream/gzip";
@@ -140,6 +146,8 @@ grpc_slice grpc_compression_algorithm_slice(
       return GRPC_MDSTR_DEFLATE;
     case GRPC_COMPRESS_GZIP:
       return GRPC_MDSTR_GZIP;
+    case GRPC_COMPRESS_ZSTD:
+      return GRPC_MDSTR_ZSTD;
     case GRPC_COMPRESS_STREAM_GZIP:
       return GRPC_MDSTR_STREAM_SLASH_GZIP;
     case GRPC_COMPRESS_ALGORITHMS_COUNT:
@@ -156,6 +164,8 @@ grpc_compression_algorithm grpc_compression_algorithm_from_slice(
     return GRPC_COMPRESS_DEFLATE;
   if (grpc_slice_eq_static_interned(str, GRPC_MDSTR_GZIP))
     return GRPC_COMPRESS_GZIP;
+  if (grpc_slice_eq_static_interned(str, GRPC_MDSTR_ZSTD))
+    return GRPC_COMPRESS_ZSTD;
   if (grpc_slice_eq_static_interned(str, GRPC_MDSTR_STREAM_SLASH_GZIP))
     return GRPC_COMPRESS_STREAM_GZIP;
   return GRPC_COMPRESS_ALGORITHMS_COUNT;
@@ -170,6 +180,8 @@ grpc_mdelem grpc_compression_encoding_mdelem(
       return GRPC_MDELEM_GRPC_ENCODING_DEFLATE;
     case GRPC_COMPRESS_GZIP:
       return GRPC_MDELEM_GRPC_ENCODING_GZIP;
+    case GRPC_COMPRESS_ZSTD:
+      return GRPC_MDELEM_GRPC_ENCODING_ZSTD;
     case GRPC_COMPRESS_STREAM_GZIP:
       return GRPC_MDELEM_GRPC_ENCODING_GZIP;
     default:

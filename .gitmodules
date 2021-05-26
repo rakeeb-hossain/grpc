@@ -46,3 +46,6 @@
 [submodule "third_party/udpa"]
 	path = third_party/udpa
 	url = https://github.com/cncf/udpa.git
+[submodule "third_party/zstd"]
+	path = third_party/zstd
+	url = https://github.com/facebook/zstd.git
