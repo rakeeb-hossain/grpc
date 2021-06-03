@@ -89,7 +89,7 @@ static void* zalloc_gpr(void* /*opaque*/, unsigned int items,
 static void zfree_gpr(void* /*opaque*/, void* address) { gpr_free(address); }
 
 static int zlib_compress(grpc_slice_buffer* input, grpc_slice_buffer* output,
-                         int algorithm) {
+                         grpc_message_compression_algorithm algorithm) {
   z_stream zs;
   int r;
   size_t i;
@@ -98,13 +98,14 @@ static int zlib_compress(grpc_slice_buffer* input, grpc_slice_buffer* output,
   memset(&zs, 0, sizeof(zs));
   zs.zalloc = zalloc_gpr;
   zs.zfree = zfree_gpr;
-  if (algorithm == 2) {
-    r = zstd_deflateInit2(&zs, Z_DEFAULT_COMPRESSION, Z_DEFLATED, 15 | (algorithm ? 16 : 0),
+  bool is_gzip = (algorithm == GRPC_MESSAGE_COMPRESS_GZIP);
+  if (algorithm == GRPC_MESSAGE_COMPRESS_ZSTD) {
+    r = zstd_deflateInit2(&zs, Z_DEFAULT_COMPRESSION, Z_DEFLATED, 15 | (is_gzip ? 16 : 0),
                      8, Z_DEFAULT_STRATEGY);
     GPR_ASSERT(r == Z_OK);
     r = zlib_body(&zs, input, output, zstd_deflate) && output->length < input->length;
   } else {
-    r = deflateInit2(&zs, Z_DEFAULT_COMPRESSION, Z_DEFLATED, 15 | (algorithm ? 16 : 0),
+    r = deflateInit2(&zs, Z_DEFAULT_COMPRESSION, Z_DEFLATED, 15 | (is_gzip ? 16 : 0),
                      8, Z_DEFAULT_STRATEGY);
     GPR_ASSERT(r == Z_OK);
     r = zlib_body(&zs, input, output, deflate) && output->length < input->length;
@@ -116,7 +117,7 @@ static int zlib_compress(grpc_slice_buffer* input, grpc_slice_buffer* output,
     output->count = count_before;
     output->length = length_before;
   }
-  if (algorithm == 2) {
+  if (algorithm == GRPC_MESSAGE_COMPRESS_ZSTD) {
     zstd_deflateEnd(&zs);
   } else {
     deflateEnd(&zs);
@@ -125,7 +126,7 @@ static int zlib_compress(grpc_slice_buffer* input, grpc_slice_buffer* output,
 }
 
 static int zlib_decompress(grpc_slice_buffer* input, grpc_slice_buffer* output,
-                           int algorithm) {
+                           grpc_message_compression_algorithm algorithm) {
   z_stream zs;
   int r;
   size_t i;
@@ -134,12 +135,13 @@ static int zlib_decompress(grpc_slice_buffer* input, grpc_slice_buffer* output,
   memset(&zs, 0, sizeof(zs));
   zs.zalloc = zalloc_gpr;
   zs.zfree = zfree_gpr;
-  if (algorithm == 2) {
-    r = zstd_inflateInit2(&zs, 15 | (algorithm ? 16 : 0));
+  bool is_gzip  = (algorithm == GRPC_MESSAGE_COMPRESS_GZIP);
+  if (algorithm == GRPC_MESSAGE_COMPRESS_ZSTD) {
+    r = zstd_inflateInit2(&zs, 15 | (is_gzip ? 16 : 0));
     GPR_ASSERT(r == Z_OK);
     r = zlib_body(&zs, input, output, zstd_inflate);
   } else {
-    r = inflateInit2(&zs, 15 | (algorithm ? 16 : 0));
+    r = inflateInit2(&zs, 15 | (is_gzip ? 16 : 0));
     GPR_ASSERT(r == Z_OK);
     r = zlib_body(&zs, input, output, inflate);
   }
@@ -150,7 +152,7 @@ static int zlib_decompress(grpc_slice_buffer* input, grpc_slice_buffer* output,
     output->count = count_before;
     output->length = length_before;
   }
-  if (algorithm == 2) {
+  if (algorithm == GRPC_MESSAGE_COMPRESS_ZSTD) {
     zstd_inflateEnd(&zs);
   } else {
     inflateEnd(&zs);
@@ -174,11 +176,11 @@ static int compress_inner(grpc_message_compression_algorithm algorithm,
          rely on that here */
       return 0;
     case GRPC_MESSAGE_COMPRESS_DEFLATE:
-      return zlib_compress(input, output, 0);
+      return zlib_compress(input, output, algorithm);
     case GRPC_MESSAGE_COMPRESS_GZIP:
-      return zlib_compress(input, output, 1);
+      return zlib_compress(input, output, algorithm);
     case GRPC_MESSAGE_COMPRESS_ZSTD:
-      return zlib_compress(input, output, 2);
+      return zlib_compress(input, output, algorithm);
     case GRPC_MESSAGE_COMPRESS_ALGORITHMS_COUNT:
       break;
   }
@@ -201,11 +203,11 @@ int grpc_msg_decompress(grpc_message_compression_algorithm algorithm,
     case GRPC_MESSAGE_COMPRESS_NONE:
       return copy(input, output);
     case GRPC_MESSAGE_COMPRESS_DEFLATE:
-      return zlib_decompress(input, output, 0);
+      return zlib_decompress(input, output, algorithm);
     case GRPC_MESSAGE_COMPRESS_GZIP:
-      return zlib_decompress(input, output, 1);
+      return zlib_decompress(input, output, algorithm);
     case GRPC_MESSAGE_COMPRESS_ZSTD:
-      return zlib_decompress(input, output, 2);
+      return zlib_decompress(input, output, algorithm);
     case GRPC_MESSAGE_COMPRESS_ALGORITHMS_COUNT:
       break;
   }
